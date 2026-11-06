@@ -11,10 +11,13 @@ import random
 import altair as alt
 import pandas as pd
 import streamlit as st
+from dotenv import load_dotenv
 
 import config
 import fast_sim
 
+# Read API keys from the .env file (if there is one) into the environment
+load_dotenv()
 # ---------------------------------------------------------------
 # Page setup and colours
 # ---------------------------------------------------------------
@@ -435,18 +438,31 @@ with tabs[4]:
 with tabs[5]:
     import agent
 
-    key = os.environ.get("ANTHROPIC_API_KEY", "")
-    try:
-        key = key or st.secrets.get("ANTHROPIC_API_KEY", "")
-    except Exception:
-        pass
-    c1, c2, c3 = st.columns([3, 2, 1])
-    typed = c1.text_input("Anthropic API key", type="password",
-                          placeholder="sk-ant-...  (or set ANTHROPIC_API_KEY)",
-                          help="Used only for this session; never saved to disk.")
-    model = c2.text_input("Model", agent.DEFAULT_MODEL)
-    key = typed or key
-    if c3.button("Clear chat", use_container_width=True):
+    c1, c2, c3, c4 = st.columns([2, 3, 2, 1])
+    provider = c1.selectbox("AI provider", list(agent.PROVIDERS))
+    default_model, env_var = agent.PROVIDERS[provider]
+
+    key = ""
+    if env_var:
+        key = os.environ.get(env_var, "")
+        try:
+            key = key or st.secrets.get(env_var, "")
+        except Exception:
+            pass
+        typed = c2.text_input(
+            f"{provider.split()[0]} API key", type="password",
+            placeholder=("already set from " + env_var) if key
+            else f"paste key here (or set {env_var})",
+            help="Used only while the dashboard is open; never saved to a file.")
+        key = typed or key
+    else:
+        c2.text_input("API key", "Not needed: runs on this computer",
+                      disabled=True,
+                      help="Install Ollama from ollama.com, then run: "
+                           f"ollama pull {default_model}")
+    model = c3.text_input("Model", default_model, key=f"model_{provider}")
+    c4.markdown("<div style='height:28px'></div>", unsafe_allow_html=True)
+    if c4.button("Clear chat", use_container_width=True):
         st.session_state.chat = []
 
     st.caption("The analyst answers by running the simulator (it never makes up "
@@ -474,8 +490,8 @@ with tabs[5]:
 
     question = st.chat_input("Ask about delay costs...") or clicked
     if question:
-        if not key:
-            st.warning("Add an Anthropic API key above to use the analyst.")
+        if env_var and not key:
+            st.warning(f"Add your {provider.split()[0]} API key above to use the analyst.")
         else:
             with st.chat_message("user"):
                 st.markdown(question)
@@ -487,11 +503,26 @@ with tabs[5]:
 
                 try:
                     answer = agent.ask(question, st.session_state.chat, flights,
-                                       passengers, key, model, on_tool=show_tool)
+                                       passengers, provider, model, key,
+                                       on_tool=show_tool)
                     status_box.update(label="Done", state="complete")
                 except Exception as e:
                     status_box.update(label="Error", state="error")
-                    answer = f"Sorry, the request failed: `{e}`"
+                    msg = str(e).lower()
+                    if any(w in msg for w in ("api key", "api_key", "401",
+                                              "permission", "invalid")):
+                        hint = "The API key looks wrong. Check you pasted all of it."
+                    elif any(w in msg for w in ("429", "quota", "rate", "exhausted")):
+                        hint = ("The free-tier limit was reached. Wait a minute, "
+                                "or switch to another provider.")
+                    elif "not found" in msg or "404" in msg:
+                        hint = "That model name wasn't found. Check the Model box."
+                    elif any(w in msg for w in ("connect", "refused", "11434")):
+                        hint = ("Couldn't reach the AI service. Check your internet, "
+                                "or for Ollama make sure the Ollama app is running.")
+                    else:
+                        hint = "Something went wrong talking to the AI service."
+                    answer = f"Sorry, the request failed. {hint}\n\nDetails: `{e}`"
                 st.markdown(answer)
             st.session_state.chat += [{"role": "user", "content": question},
                                       {"role": "assistant", "content": answer}]

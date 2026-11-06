@@ -40,7 +40,7 @@ class PlaneChain:
         conn = conn[conn["connecting_flight"].map(plane_of) != self.aircraft_id]
         position = {f: i for i, f in enumerate(self.ids)}
         self.conn = conn.reset_index(drop=True)
-        self.conn_leg = conn["flight_id"].map(position).to_numpy()
+        self.conn_leg = conn["flight_id"].map(position).to_numpy(dtype=int)
         self.conn_gap = conn["connection_gap"].to_numpy(dtype=float)
 
 

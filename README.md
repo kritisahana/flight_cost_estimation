@@ -10,7 +10,7 @@ randomness, an interactive dashboard, and an optional AI analyst.
 ```bash
 pip3 install -r requirements.txt
 python3 generate_data.py          # build the synthetic airline (once)
-streamlit run app.py              # open the dashboard
+python3 -m streamlit run app.py    # open the dashboard
 ```
 
 The dashboard opens in your browser at http://localhost:8501.
@@ -38,20 +38,29 @@ The dashboard opens in your browser at http://localhost:8501.
 - **Cost breakdown:** cost by category at the chosen delay, and how the mix changes.
 - **Compare flights:** which flights are most expensive to delay.
 - **Network:** each aircraft's day, coloured by what the delay affects.
-- **AI analyst:** ask questions in plain English (needs an Anthropic API key).
+- **AI analyst:** ask questions in plain English (free Gemini or Groq key, or Ollama with no key).
 - **Method:** how the model works, sources and limitations.
 
 ## AI analyst
 
-The analyst is a Claude model with five tools (simulate a delay, cost curve,
-rank flights, evaluate holding a connecting flight, list flights). It gets every
-number from the simulator rather than calculating itself.
+The analyst is built with LangChain and has five tools: simulate a delay, cost
+curve, rank flights, evaluate holding a connecting flight, and list flights. It
+gets every number from the simulator rather than calculating itself.
 
-To use it, either paste your key into the dashboard, or set it before starting:
+Choose the AI provider in the dashboard:
+
+| Provider | Default model | Key |
+|---|---|---|
+| Gemini (recommended) | `gemini-2.5-flash` | Free from aistudio.google.com |
+| Groq | `llama-3.3-70b-versatile` | Free from console.groq.com |
+| Ollama | `qwen3:8b` | None: runs on your computer (install from ollama.com) |
+
+Paste the key into the dashboard, or set it before starting:
 
 ```bash
-export ANTHROPIC_API_KEY="sk-ant-..."
-streamlit run app.py
+export GOOGLE_API_KEY="your-key"      # for Gemini
+export GROQ_API_KEY="your-key"        # for Groq
+python3 -m streamlit run app.py
 ```
 
 Never commit your key to GitHub.

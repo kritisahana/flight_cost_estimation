@@ -2,4 +2,8 @@ pandas
 numpy
 matplotlib
 streamlit
-anthropic
+langchain-core
+langchain-google-genai
+langchain-groq
+langchain-ollama
+python-dotenv
