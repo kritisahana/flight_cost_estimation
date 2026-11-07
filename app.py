@@ -21,8 +21,7 @@ load_dotenv()
 # ---------------------------------------------------------------
 # Page setup and colours
 # ---------------------------------------------------------------
-st.set_page_config(page_title="Flight Delay Cost Estimator", page_icon="✈️",
-                   layout="wide")
+st.set_page_config(page_title="Flight Delay Cost Estimator", layout="wide")
 
 BLUE, ORANGE, AQUA, YELLOW, MAGENTA, VIOLET = (
     "#2a78d6", "#eb6834", "#1baf7a", "#eda100", "#e87ba4", "#6250d6")
@@ -179,8 +178,8 @@ k5.metric("Flights cancelled", f"{row['flights_cancelled']:.1f}",
           help=f"A flight more than {config.CANCELLATION_THRESHOLD} min late "
                "is assumed cancelled.")
 
-tabs = st.tabs(["📈 Cost curve", "🔗 What breaks", "🧾 Cost breakdown",
-                "🏆 Compare flights", "🗺️ Network", "🤖 AI analyst", "ℹ️ Method"])
+tabs = st.tabs(["Cost curve", "What breaks", "Cost breakdown",
+                "Compare flights", "Network", "AI analyst", "Method"])
 
 # ---------------------------------------------------------------
 # Tab 1: cost curve
@@ -237,7 +236,7 @@ with tabs[0]:
                                   "flights_delayed": "Flights delayed",
                                   "flights_cancelled": "Flights cancelled"})
     c1, c2 = st.columns([1, 4])
-    c1.download_button("⬇ Download table (CSV)", table.to_csv(index=False),
+    c1.download_button("Download table (CSV)", table.to_csv(index=False),
                        f"{flight_id}_cost_curve.csv", "text/csv",
                        use_container_width=True)
     with c2.expander("Show full 5-minute table"):
@@ -371,7 +370,7 @@ with tabs[3]:
         .properties(height=max(300, 26 * len(rank))).configure_view(stroke=None)
         .configure_axis(gridColor=GRID, labelColor=MUTED, titleColor=MUTED),
         use_container_width=True)
-    st.download_button("⬇ Download ranking (CSV)",
+    st.download_button("Download ranking (CSV)",
                        rank.drop(columns="selected").to_csv(index=False),
                        f"flight_ranking_{delay}min.csv", "text/csv")
 
@@ -499,7 +498,7 @@ with tabs[5]:
                 status_box = st.status("Thinking...", expanded=False)
 
                 def show_tool(name, args):
-                    status_box.write(f"🔧 `{name}` {args}")
+                    status_box.write(f"`{name}` {args}")
 
                 try:
                     answer = agent.ask(question, st.session_state.chat, flights,
